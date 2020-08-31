@@ -340,14 +340,15 @@ loadSession optTesting ShakeExtras{logger, eventer} dir = do
         let new_cache = newComponentCache logger hscEnv uids
 
         logInfo logger (T.pack ("xoxoxoxoxo: 4"))
-        (cs, res) <- new_cache new
+        (_, res) <- error "hi im a res" -- new_cache new
         -- Modified cache targets for everything else in the hie.yaml file
         -- which now uses the same EPS and so on
         logInfo logger (T.pack ("xoxoxoxoxo: 5"))
-        cached_targets <- concatMapM (fmap fst . new_cache) old_deps
+        -- cached_targets <- concatMapM (fmap fst . new_cache) old_deps
         logInfo logger (T.pack ("xoxoxoxoxo: 6"))
-        modifyVar_ fileToFlags $ \var -> do
-            pure $ Map.insert hieYaml (HM.fromList (cs ++ cached_targets)) var
+        -- modifyVar_ fileToFlags $ \var -> do
+             
+        --     pure $ Map.insert hieYaml (HM.fromList (cs ++ cached_targets)) var
         logInfo logger (T.pack ("xoxoxoxoxo: 7"))
 
         return (fst res)
@@ -435,7 +436,9 @@ newComponentCache logger hsc_env uids ci = do
     logDebug logger ("New Component Cache HscEnvEq: " <> T.pack (show res))
 
     let is = importPaths df
+    logDebug logger ("importPaths: " <> T.pack (show is))
     ctargets <- concatMapM (targetToFile is  . targetId) (componentTargets ci)
+    logDebug logger ("ctargets: " <> T.pack (show ctargets))
     -- A special target for the file which caused this wonderful
     -- component to be created. In case the cradle doesn't list all the targets for
     -- the component, in which case things will be horribly broken anyway.
