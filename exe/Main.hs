@@ -307,6 +307,7 @@ loadSession optTesting ShakeExtras{logger, eventer} dir = do
             hscEnv <- case oldDeps of
                         Nothing -> emptyHscEnv
                         Just (old_hsc, _) -> setNameCache (hsc_NC old_hsc) <$> emptyHscEnv
+            logInfo logger (T.pack ("xoxoxoxoxo: 1"))
             newHscEnv <-
               -- Add the options for the current component to the HscEnv
               evalGhcEnv hscEnv $ do
@@ -320,8 +321,10 @@ loadSession optTesting ShakeExtras{logger, eventer} dir = do
             -- . The information for the new component which caused this cache miss
             -- . The modified information (without -inplace flags) for
             --   existing packages
+            logInfo logger (T.pack ("xoxoxoxoxo: 2"))
             pure (Map.insert hieYaml (newHscEnv, new_deps) m, (newHscEnv, head new_deps', tail new_deps'))
 
+  logInfo logger (T.pack ("xoxoxoxoxo: 3"))
   let session :: (Maybe FilePath, NormalizedFilePath, ComponentOptions) -> IO (IdeResult HscEnvEq)
       session (hieYaml, cfp, opts) = do
         (hscEnv, new, old_deps) <- packageSetup (hieYaml, cfp, opts)
@@ -335,18 +338,27 @@ loadSession optTesting ShakeExtras{logger, eventer} dir = do
         -- New HscEnv for the component in question, returns the new HscEnvEq and
         -- a mapping from FilePath to the newly created HscEnvEq.
         let new_cache = newComponentCache logger hscEnv uids
+
+        logInfo logger (T.pack ("xoxoxoxoxo: 4"))
         (cs, res) <- new_cache new
         -- Modified cache targets for everything else in the hie.yaml file
         -- which now uses the same EPS and so on
+        logInfo logger (T.pack ("xoxoxoxoxo: 5"))
         cached_targets <- concatMapM (fmap fst . new_cache) old_deps
+        logInfo logger (T.pack ("xoxoxoxoxo: 6"))
         modifyVar_ fileToFlags $ \var -> do
             pure $ Map.insert hieYaml (HM.fromList (cs ++ cached_targets)) var
+        logInfo logger (T.pack ("xoxoxoxoxo: 7"))
 
         return (fst res)
 
+  logInfo logger (T.pack ("xoxoxoxoxo: 8"))
+
   let consultCradle :: Maybe FilePath -> FilePath -> IO (IdeResult HscEnvEq)
       consultCradle hieYaml cfp = do
+         logInfo logger (T.pack ("xoxoxoxoxo: 9"))
          when optTesting $ eventer $ notifyCradleLoaded cfp
+         logInfo logger (T.pack ("xoxoxoxoxo: 10"))
          logInfo logger $ T.pack ("Consulting the cradle for " <> show cfp)
          cradle <- maybe (loadImplicitCradle $ addTrailingPathSeparator dir) loadCradle hieYaml
          eopts <- cradleToSessionOpts cradle cfp
